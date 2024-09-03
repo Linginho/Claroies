@@ -16,7 +16,11 @@ class Userdata:
         self.DB_CONN.commit()
         self.DB_CONN.close()
 
+<<<<<<< HEAD
     def __init__(self, user_id: str):
+=======
+    def __init__(self, user_id):
+>>>>>>> 5edefa10e7dac252f2deb21405614bd8342601d7
         self.db = user_id+f".db"
         self.open_db()
         self.USER_CURSOR.execute('CREATE TABLE IF NOT EXISTS users('
@@ -29,18 +33,30 @@ class Userdata:
                                  'activity_level FLOATING )')
         self.close_db()
 
+<<<<<<< HEAD
     def run_sql_comm(self, comm: str):
+=======
+    def run_sql_comm(self, comm):
+>>>>>>> 5edefa10e7dac252f2deb21405614bd8342601d7
         self.open_db()
         self.USER_CURSOR.execute(comm)
         self.close_db()
 
+<<<<<<< HEAD
     def get_sql_result(self, comm: str):
+=======
+    def get_sql_result(self, comm):
+>>>>>>> 5edefa10e7dac252f2deb21405614bd8342601d7
         self.open_db()
         result = self.USER_CURSOR.execute(comm).fetchone()
         self.close_db()
         return result
 
+<<<<<<< HEAD
     def add_data(self, u_id: str, name: str= "test", gender: bool = True, age: float = 20,
+=======
+    def add_data(self, u_id: str, name: str = "gg", gender: bool = True, age: float = 20,
+>>>>>>> 5edefa10e7dac252f2deb21405614bd8342601d7
                  weight: float = 60, height: float = 160, activity_level: float = 1.2):
 
         comm = (f"insert into {self.table} values(\'{str(u_id)}\', \'{str(name)}\', {bool(gender)},"
@@ -49,17 +65,29 @@ class Userdata:
             self.run_sql_comm(comm=comm)
         return self.search_data("u_id", u_id)
 
+<<<<<<< HEAD
     def search_data(self, field: str, data):
         comm = f"select * from {self.table} where {field}=\'{data}\'"
         return self.get_sql_result(comm=comm)
 
     def update_data(self, u_id: str, field: str, data):
+=======
+    def search_data(self, field, data):
+        comm = f"select * from {self.table} where {field}=\'{data}\'"
+        return self.get_sql_result(comm=comm)
+
+    def update_data(self, u_id, field, data):
+>>>>>>> 5edefa10e7dac252f2deb21405614bd8342601d7
         comm = f"update {self.table} set {field}={float(data)} where u_id=\'{str(u_id)}\'"
         if self.search_data("u_id", u_id):
             self.run_sql_comm(comm=comm)
         return self.search_data("u_id", u_id)
 
+<<<<<<< HEAD
     def delete_data(self, u_id: str):
+=======
+    def delete_data(self, u_id):
+>>>>>>> 5edefa10e7dac252f2deb21405614bd8342601d7
         comm = f"delete from {self.table} where u_id=\'{str(u_id)}\'"
         if self.search_data("u_id", u_id):
             self.run_sql_comm(comm=comm)
@@ -90,7 +118,11 @@ class Dailydata:
         self.DB_CONN.commit()
         self.DB_CONN.close()
 
+<<<<<<< HEAD
     def __init__(self, db: str):
+=======
+    def __init__(self, db):
+>>>>>>> 5edefa10e7dac252f2deb21405614bd8342601d7
         self.db = db+f".db"
         self.open_db()
         self.USER_CURSOR.execute(f'CREATE TABLE IF NOT EXISTS {self.table}('
@@ -102,12 +134,20 @@ class Dailydata:
                                  'exercise_duration FLOATING)')
         self.close_db()
 
+<<<<<<< HEAD
     def run_sql_comm(self, comm: str):
+=======
+    def run_sql_comm(self, comm):
+>>>>>>> 5edefa10e7dac252f2deb21405614bd8342601d7
         self.open_db()
         self.USER_CURSOR.execute(comm)
         self.close_db()
 
+<<<<<<< HEAD
     def get_sql_result(self, comm: str):
+=======
+    def get_sql_result(self, comm):
+>>>>>>> 5edefa10e7dac252f2deb21405614bd8342601d7
         self.open_db()
         result = self.USER_CURSOR.execute(comm).fetchone()
         self.close_db()
@@ -123,16 +163,28 @@ class Dailydata:
         self.run_sql_comm(comm=comm)
         return self.search_data("u_id", u_id)
 
+<<<<<<< HEAD
     def search_data(self, field: str, data):
         comm = f"select * from {self.table} where {field}=\'{data}\'"
         return self.get_sql_result(comm=comm)
 
     def update_data(self, u_id: str, field: str, data):
+=======
+    def search_data(self, field, data):
+        comm = f"select * from {self.table} where {field}=\'{data}\'"
+        return self.get_sql_result(comm=comm)
+
+    def update_data(self, u_id, field, data):
+>>>>>>> 5edefa10e7dac252f2deb21405614bd8342601d7
         comm = f"update {self.table} set {field}={float(data)} where u_id=\'{str(u_id)}\'"
         self.run_sql_comm(comm=comm)
         return self.search_data("u_id", u_id)
 
+<<<<<<< HEAD
     def delete_data(self, u_id: str):
+=======
+    def delete_data(self, u_id):
+>>>>>>> 5edefa10e7dac252f2deb21405614bd8342601d7
         comm = f"delete from {self.table} where u_id=\'{str(u_id)}\'"
         if self.search_data("u_id", u_id):
             self.run_sql_comm(comm=comm)
