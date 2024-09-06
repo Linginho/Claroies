@@ -6,7 +6,7 @@ class Userdata:
     USER_CURSOR = None
     db = ""
     table = "users"
-    user_data = []
+    user_id = ""
 
     def open_db(self):
         self.DB_CONN = sqlite3.connect(self.db)
@@ -17,7 +17,8 @@ class Userdata:
         self.DB_CONN.close()
 
     def __init__(self, user_id: str):
-        self.db = user_id+f".db"
+        self.user_id = user_id
+        self.db = self.user_id+f".db"
         self.open_db()
         self.USER_CURSOR.execute('CREATE TABLE IF NOT EXISTS users('
                                  'u_id TEXT PRIMARY KEY NOT NULL, '
@@ -40,13 +41,13 @@ class Userdata:
         self.close_db()
         return result
 
-    def add_data(self, u_id: str, name: str = "test", gender: bool = True, age: float = 20,
+    def add_data(self, name: str = "test", gender: bool = True, age: float = 20,
                  weight: float = 60, height: float = 160, activity_level: float = 1.2):
-        comm = (f"insert into {self.table} values(\'{str(u_id)}\', \'{str(name)}\', {bool(gender)},"
+        comm = (f"insert into {self.table} values(\'{str(self.user_id)}\', \'{str(name)}\', {bool(gender)},"
                 f"{int(age)}, {float(weight)}, {float(height)}, {float(activity_level)})")
-        if not self.search_data("u_id", u_id):
+        if not self.search_data("u_id", self.user_id):
             self.run_sql_comm(comm=comm)
-        return self.search_data("u_id", u_id)
+        return self.search_data("u_id", self.user_id)
 
     def search_data(self, field: str, data):
         comm = f"select * from {self.table} where {field}=\'{data}\'"
@@ -56,17 +57,22 @@ class Userdata:
             return None
         return self.translate_to_dir(column_value, search_result)
 
-    def update_data(self, u_id: str, field: str, data):
-        comm = f"update {self.table} set {field}={float(data)} where u_id=\'{str(u_id)}\'"
-        if self.search_data("u_id", u_id):
+    def update_data(self, field: str, data):
+        if field == "name":
+            comm = f"update {self.table} set {field}={str(data)} where u_id=\'{str(self.user_id)}\'"
+        elif field == "gender":
+            comm = f"update {self.table} set {field}={bool(data)} where u_id=\'{str(self.user_id)}\'"
+        else:
+            comm = f"update {self.table} set {field}={float(data)} where u_id=\'{str(self.user_id)}\'"
+        if self.search_data("u_id", self.user_id):
             self.run_sql_comm(comm=comm)
-        return self.search_data("u_id", u_id)
+        return self.search_data("u_id", self.user_id)
 
-    def delete_data(self, u_id: str):
-        comm = f"delete from {self.table} where u_id=\'{str(u_id)}\'"
-        if self.search_data("u_id", u_id):
+    def delete_data(self):
+        comm = f"delete from {self.table} where u_id=\'{str(self.user_id)}\'"
+        if self.search_data("u_id", self.user_id):
             self.run_sql_comm(comm=comm)
-        return self.search_data("u_id", u_id)
+        return self.search_data("u_id", self.user_id)
 
     def get_all_columns(self):
         column_names = []
@@ -88,7 +94,7 @@ class Dailydata:
     USER_CURSOR = None
     db = ""
     table = "daily_info"
-    user_data = []
+    user_id = ""
 
     def open_db(self):
         self.DB_CONN = sqlite3.connect(self.db)
@@ -98,8 +104,9 @@ class Dailydata:
         self.DB_CONN.commit()
         self.DB_CONN.close()
 
-    def __init__(self, db: str):
-        self.db = db+f".db"
+    def __init__(self, user_id: str):
+        self.user_id = user_id
+        self.db = self.user_id+f".db"
         self.open_db()
         self.USER_CURSOR.execute(f'CREATE TABLE IF NOT EXISTS {self.table}('
                                  'date TEXT, ' 
@@ -128,12 +135,12 @@ class Dailydata:
         self.close_db()
         return result
 
-    def add_data(self, u_id: str, food_name: str = None, food_calories: float = 0,
+    def add_data(self, food_name: str = None, food_calories: float = 0,
                  exercise_name: str = None, exercise_duration: float = 0):
         date = datetime.datetime.now().strftime("%Y:%m:%d")
         time = datetime.datetime.now().strftime("%H:%M:%S")
         comm = (f"insert into {self.table} values(\'{str(date)}\',\'{str(time)}\',"
-                f"\'{str(u_id)}\',\'{str(food_name)}\', {float(food_calories)},"
+                f"\'{str(self.user_id)}\',\'{str(food_name)}\', {float(food_calories)},"
                 f" \'{str(exercise_name)}\',{float(exercise_duration)})")
         self.run_sql_comm(comm=comm)
         return self.search_data("time", time)
@@ -174,10 +181,10 @@ class Dailydata:
             return None
         return self.trans_to_dir(action_result, columns_value, count_status)
 
-    def update_data(self, u_id: str, field: str, data):
-        comm = f"update {self.table} set {field}={float(data)} where u_id=\'{str(u_id)}\'"
+    def update_data(self, field: str, data):
+        comm = f"update {self.table} set {field}={float(data)} where u_id=\'{str(self.user_id)}\'"
         self.run_sql_comm(comm=comm)
-        return self.search_data("u_id", u_id)
+        return self.search_data("u_id", self.user_id)
 
     def delete_data(self, field: str, data: str):
         comm = f"delete from {self.table} where {field}=\'{str(data)}\'"
