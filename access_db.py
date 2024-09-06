@@ -1,5 +1,5 @@
+import datetime
 import sqlite3
-
 
 class Userdata:
     DB_CONN = None
@@ -16,11 +16,7 @@ class Userdata:
         self.DB_CONN.commit()
         self.DB_CONN.close()
 
-<<<<<<< HEAD
     def __init__(self, user_id: str):
-=======
-    def __init__(self, user_id):
->>>>>>> 5edefa10e7dac252f2deb21405614bd8342601d7
         self.db = user_id+f".db"
         self.open_db()
         self.USER_CURSOR.execute('CREATE TABLE IF NOT EXISTS users('
@@ -33,68 +29,46 @@ class Userdata:
                                  'activity_level FLOATING )')
         self.close_db()
 
-<<<<<<< HEAD
     def run_sql_comm(self, comm: str):
-=======
-    def run_sql_comm(self, comm):
->>>>>>> 5edefa10e7dac252f2deb21405614bd8342601d7
         self.open_db()
         self.USER_CURSOR.execute(comm)
         self.close_db()
 
-<<<<<<< HEAD
     def get_sql_result(self, comm: str):
-=======
-    def get_sql_result(self, comm):
->>>>>>> 5edefa10e7dac252f2deb21405614bd8342601d7
         self.open_db()
         result = self.USER_CURSOR.execute(comm).fetchone()
         self.close_db()
         return result
 
-<<<<<<< HEAD
-    def add_data(self, u_id: str, name: str= "test", gender: bool = True, age: float = 20,
-=======
-    def add_data(self, u_id: str, name: str = "gg", gender: bool = True, age: float = 20,
->>>>>>> 5edefa10e7dac252f2deb21405614bd8342601d7
+    def add_data(self, u_id: str, name: str = "test", gender: bool = True, age: float = 20,
                  weight: float = 60, height: float = 160, activity_level: float = 1.2):
-
         comm = (f"insert into {self.table} values(\'{str(u_id)}\', \'{str(name)}\', {bool(gender)},"
                 f"{int(age)}, {float(weight)}, {float(height)}, {float(activity_level)})")
         if not self.search_data("u_id", u_id):
             self.run_sql_comm(comm=comm)
         return self.search_data("u_id", u_id)
 
-<<<<<<< HEAD
     def search_data(self, field: str, data):
         comm = f"select * from {self.table} where {field}=\'{data}\'"
-        return self.get_sql_result(comm=comm)
+        search_result = self.get_sql_result(comm=comm)
+        column_value = self.get_all_columns()
+        if not search_result:
+            return None
+        return self.translate_to_dir(column_value, search_result)
 
     def update_data(self, u_id: str, field: str, data):
-=======
-    def search_data(self, field, data):
-        comm = f"select * from {self.table} where {field}=\'{data}\'"
-        return self.get_sql_result(comm=comm)
-
-    def update_data(self, u_id, field, data):
->>>>>>> 5edefa10e7dac252f2deb21405614bd8342601d7
         comm = f"update {self.table} set {field}={float(data)} where u_id=\'{str(u_id)}\'"
         if self.search_data("u_id", u_id):
             self.run_sql_comm(comm=comm)
         return self.search_data("u_id", u_id)
 
-<<<<<<< HEAD
     def delete_data(self, u_id: str):
-=======
-    def delete_data(self, u_id):
->>>>>>> 5edefa10e7dac252f2deb21405614bd8342601d7
         comm = f"delete from {self.table} where u_id=\'{str(u_id)}\'"
         if self.search_data("u_id", u_id):
             self.run_sql_comm(comm=comm)
         return self.search_data("u_id", u_id)
 
     def get_all_columns(self):
-        # table_name = "users"
         column_names = []
         self.open_db()
         result = self.USER_CURSOR.execute(f"PRAGMA table_info({self.table});").fetchall()
@@ -102,6 +76,12 @@ class Userdata:
         for col in result:
             column_names.append(col[1])
         return column_names
+
+    def translate_to_dir(self, column_value, data):
+        dir_result = []
+        for i in range(len(data)):
+            dir_result.append({column_value[i]: data[i]})
+        return dir_result
 
 class Dailydata:
     DB_CONN = None
@@ -118,80 +98,94 @@ class Dailydata:
         self.DB_CONN.commit()
         self.DB_CONN.close()
 
-<<<<<<< HEAD
     def __init__(self, db: str):
-=======
-    def __init__(self, db):
->>>>>>> 5edefa10e7dac252f2deb21405614bd8342601d7
         self.db = db+f".db"
         self.open_db()
         self.USER_CURSOR.execute(f'CREATE TABLE IF NOT EXISTS {self.table}('
+                                 'date TEXT, ' 
+                                 'time TEXT, '
                                  'u_id TEXT, '
-                                 'data_time TEXT, '
                                  'food_name TEXT, '
                                  'food_calories FLOATING, '
                                  'exercise_name TEXT, '
                                  'exercise_duration FLOATING)')
         self.close_db()
 
-<<<<<<< HEAD
     def run_sql_comm(self, comm: str):
-=======
-    def run_sql_comm(self, comm):
->>>>>>> 5edefa10e7dac252f2deb21405614bd8342601d7
         self.open_db()
         self.USER_CURSOR.execute(comm)
         self.close_db()
 
-<<<<<<< HEAD
     def get_sql_result(self, comm: str):
-=======
-    def get_sql_result(self, comm):
->>>>>>> 5edefa10e7dac252f2deb21405614bd8342601d7
         self.open_db()
         result = self.USER_CURSOR.execute(comm).fetchone()
         self.close_db()
         return result
 
-    def add_data(self, u_id: str = "None", data_time: str = "None", food_name: str = "food",
-                 food_calories: float = 0, exercise_name: str = "run",
-                 exercise_duration: float = 0):
+    def get_sql_all_result(self, comm: str):
+        self.open_db()
+        result = self.USER_CURSOR.execute(comm).fetchall()
+        self.close_db()
+        return result
 
-        comm = (f"insert into {self.table} values(\'{str(u_id)}\', \'{str(data_time)}\',"
-                f" \'{str(food_name)}\', {float(food_calories)}, \'{str(exercise_name)}\',"
-                f" {float(exercise_duration)})")
+    def add_data(self, u_id: str, food_name: str = None, food_calories: float = 0,
+                 exercise_name: str = None, exercise_duration: float = 0):
+        date = datetime.datetime.now().strftime("%Y:%m:%d")
+        time = datetime.datetime.now().strftime("%H:%M:%S")
+        comm = (f"insert into {self.table} values(\'{str(date)}\',\'{str(time)}\',"
+                f"\'{str(u_id)}\',\'{str(food_name)}\', {float(food_calories)},"
+                f" \'{str(exercise_name)}\',{float(exercise_duration)})")
         self.run_sql_comm(comm=comm)
-        return self.search_data("u_id", u_id)
+        return self.search_data("time", time)
 
-<<<<<<< HEAD
     def search_data(self, field: str, data):
         comm = f"select * from {self.table} where {field}=\'{data}\'"
-        return self.get_sql_result(comm=comm)
+        action_result = self.get_sql_result(comm=comm)
+        columns_value = self.get_all_columns()
+        if not action_result:
+            return None
+        return self.trans_to_dir(action_result, columns_value, True)
+
+    def search_all_data(self, field: str, data):
+        columns_value = action_result = comm = comm2 = None
+        count_status = False
+        if field == "date":
+            if "d" in data:
+                before_day = None
+                data = int(data[:-1])
+                if data == 0:
+                    before_day = datetime.datetime.now().strftime("%Y:%m:%d")
+                else:
+                    before_day = (datetime.datetime.now() -
+                                  datetime.timedelta(days=(int(data)))).strftime("%Y:%m:%d")
+                comm = f"select * from {self.table} where {field} >= \'{before_day}\'"
+                comm2 = f"select count(*) from {self.table} where {field} >= \'{before_day}\'"
+            else:
+                comm = f"select * from {self.table} where {field}=\'{data}\'"
+                comm2 = f"select count(*) from {self.table} where {field}=\'{data}\'"
+        else:
+            comm = f"select * from {self.table} where {field}=\'{data}\'"
+            comm2 = f"select count(*) from {self.table} where {field}=\'{data}\'"
+        action_result = self.get_sql_all_result(comm=comm)
+        if self.get_sql_result(comm=comm2)[0] <= 1:
+            count_status = True
+        columns_value = self.get_all_columns()
+        if not action_result:
+            return None
+        return self.trans_to_dir(action_result, columns_value, count_status)
 
     def update_data(self, u_id: str, field: str, data):
-=======
-    def search_data(self, field, data):
-        comm = f"select * from {self.table} where {field}=\'{data}\'"
-        return self.get_sql_result(comm=comm)
-
-    def update_data(self, u_id, field, data):
->>>>>>> 5edefa10e7dac252f2deb21405614bd8342601d7
         comm = f"update {self.table} set {field}={float(data)} where u_id=\'{str(u_id)}\'"
         self.run_sql_comm(comm=comm)
         return self.search_data("u_id", u_id)
 
-<<<<<<< HEAD
-    def delete_data(self, u_id: str):
-=======
-    def delete_data(self, u_id):
->>>>>>> 5edefa10e7dac252f2deb21405614bd8342601d7
-        comm = f"delete from {self.table} where u_id=\'{str(u_id)}\'"
-        if self.search_data("u_id", u_id):
+    def delete_data(self, field: str, data: str):
+        comm = f"delete from {self.table} where {field}=\'{str(data)}\'"
+        if self.search_data(field, data):
             self.run_sql_comm(comm=comm)
-        return self.search_data("u_id", u_id)
+        return self.search_data(field, data)
 
     def get_all_columns(self):
-        # table_name = "users"
         column_names = []
         self.open_db()
         result = self.USER_CURSOR.execute(f"PRAGMA table_info({self.table});").fetchall()
@@ -200,16 +194,30 @@ class Dailydata:
             column_names.append(col[1])
         return column_names
 
+    def trans_to_dir(self, action_data, column_value, count_status: bool = False):
+        dir_result = []
+        if count_status:
+            for i in range(len(action_data)):
+                dir_result.append({column_value[i]: action_data[i]})
+            return dir_result
+        else:
+            for i in range(len(action_data)):
+                create_dir = {}
+                for j in range(len(column_value)):
+                    create_dir[column_value[j]] = action_data[i][j]
+                dir_result.append(create_dir)
+        return dir_result
 
-if __name__ == '__main__':
-    user = Userdata("aa")
-    # user.USER_CURSOR("aa")
-    # print(user.add_data("gg", 20, 160, 1880))
-    # u_id, name, gender, age, weight, height, activity_level, bmr, tdee
-    print(user.add_data("gg", "kk", "True", 20, 80, 180, 1.2))
-    print(user.search_data("u_id", "gg"))
-    print(user.update_data("gg", "age", 50))
-    print(user.get_all_columns())
-    # print(user.delete_data(u_id="gg"))
-    dailydata = Dailydata("aa")
-    dailydata.add_data("gg")
+
+if __name__ == "__main__":
+    user_id = "aa"
+    daily_data = Dailydata(user_id)
+    # print(daily_data.search_all_data("date", "0d"))
+    # print(daily_data.search_all_data("date", "10d"))
+    print(daily_data.search_all_data("date", "2024:09:04"))
+    # print(daily_data.get_sql_result("select * from daily_info where date >= \"2024-09-04\""))
+    # print(daily_data.search_data("u_id","gg"))
+    # list = daily_data.search_data("u_id", "gg")
+    # print(list[0]['date'])
+
+
