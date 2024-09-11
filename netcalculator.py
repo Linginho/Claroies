@@ -33,9 +33,32 @@ class NETCalorieCalculator:
     def set_exercise_duration(self, duration_minutes):
         self.duration_minutes = duration_minutes
 
+    # 根據運動名稱來對應運動ID
+    def get_activity_id(self, exercise_name):
+        # 定義運動名稱到ID的映射
+        activity_mapping = {
+            '跑步': '96',
+            '游泳': '127',
+            '跳繩': '108',
+            '單車': '30'
+        }
+        # 根據使用者性別決定m還是w，True為男性，False為女性
+        gender = "m" if self.user_data[2] else "w"
+        
+        if exercise_name in activity_mapping:
+            return f"{gender}{activity_mapping[exercise_name]}"
+        else:
+            print("未知的運動名稱")
+            return None
+
     # 執行爬取計算
-    def calculate_calories(self):
+    def calculate_calories(self, exercise_name):
         if not self.get_user_data():
+            return
+
+        # 根據運動名稱獲取對應的ID
+        activity_id = self.get_activity_id(exercise_name)
+        if not activity_id:
             return
 
         # 設定 ChromeDriver 路徑
@@ -51,34 +74,29 @@ class NETCalorieCalculator:
         )
 
         # 輸入數據
-        driver.find_element(By.ID, "yourh").send_keys(str(self.height))  # 輸入身高
-        driver.find_element(By.ID, "yourw").send_keys(str(self.weight))  # 輸入體重
-        driver.find_element(By.ID, "youra").send_keys(str(self.age))  # 輸入年齡
-        driver.find_element(By.ID, "yourtime").send_keys(str(self.duration_minutes))  # 輸入持續時間
+        driver.find_element(By.ID, "yourh").send_keys(str(self.height))
+        driver.find_element(By.ID, "yourw").send_keys(str(self.weight))
+        driver.find_element(By.ID, "youra").send_keys(str(self.age))
+        driver.find_element(By.ID, "yourtime").send_keys(str(self.duration_minutes))
 
         # 點擊“計算”按鈕
         driver.find_element(By.CLASS_NAME, "formc2").click()
 
-        # 等待並獲取結果
+        # 獲取對應運動的結果
         result = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.NAME, "m089"))
-        )
+            EC.presence_of_element_located((By.NAME, activity_id))
+        ).get_attribute('value')
 
-        calories = result.get_attribute('value')
-        print(f"計算結果: {calories}")
+        print(f"{exercise_name}消耗的卡路里: {result}")
 
         # 關閉瀏覽器
         driver.quit()
 
-        # 將結果存入 Dailydata 表
-        dailydata = Dailydata(self.user_id)
-        dailydata.add_data(u_id=self.user_id, data_time=str(datetime.now()), food_name="爬取計算", 
-                           food_calories=float(calories), exercise_name="爬取計算", exercise_duration=self.duration_minutes)
-        
-        return calories
+        return result
 
-# 示例用法，主程式可以像這樣使用此類別
+
+# 示例用法
 if __name__ == '__main__':
     calculator = NETCalorieCalculator("gg")
     calculator.set_exercise_duration(60)  # 主程式傳入持續時間
-    calculator.calculate_calories()
+    calculator.calculate_calories("跑步")  # 主程式傳入運動名稱
