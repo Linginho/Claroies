@@ -3,6 +3,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException, WebDriverException
 from access_db import Userdata
 
 class NETCalorieCalculator:
@@ -33,23 +34,40 @@ class NETCalorieCalculator:
         self.distance = distance
 
     def fetch_calories_from_website(self, exercise_id, exercise_name):
-        service = Service(r"chromedriver.exe")
-        driver = webdriver.Chrome(service=service)
+        try:
+            service = Service(r"chromedriver.exe")
+            driver = webdriver.Chrome(service=service)
+        except WebDriverException as e:
+            print("無法啟動 WebDriver，請檢查 chromedriver.exe 是否存在且版本匹配。")
+            print(e)
+            return None
+
         driver.get("https://met.0123456789.tw/")
 
-        WebDriverWait(driver, 20).until(
-            EC.presence_of_element_located((By.ID, "yourh"))
-        )
+        try:
+            WebDriverWait(driver, 60).until(
+                EC.presence_of_element_located((By.ID, "yourh"))
+            )
 
-        driver.find_element(By.ID, "yourh").send_keys(str(self.height))
-        driver.find_element(By.ID, "yourw").send_keys(str(self.weight))
-        driver.find_element(By.ID, "yourtime").send_keys(str(self.duration_minutes))
-        driver.find_element(By.CLASS_NAME, "formc2").click()
+            # 打印調試資訊
+            print(f"輸入的身高：{self.height}")
+            print(f"輸入的體重：{self.weight}")
+            print(f"輸入的運動時間：{self.duration_minutes}")
+            print(f"使用的 exercise_id：{exercise_id}")
 
-        result = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.NAME, exercise_id))
-        ).get_attribute('value')
+            driver.find_element(By.ID, "yourh").send_keys(str(self.height))
+            driver.find_element(By.ID, "yourw").send_keys(str(self.weight))
+            driver.find_element(By.ID, "yourtime").send_keys(str(self.duration_minutes))
+            driver.find_element(By.CLASS_NAME, "formc2").click()
 
-        print(f"消耗的卡路里: {result}")
-        driver.quit()
-        return result
+            result = WebDriverWait(driver, 60).until(
+                EC.presence_of_element_located((By.NAME, exercise_id))
+            ).get_attribute('value')
+
+            driver.quit()
+            return result
+        except TimeoutException as e:
+            print("等待元素出現時超時，請檢查元素定位方式或增加等待時間。")
+            print(e)
+            driver.quit()
+            return None
