@@ -166,7 +166,7 @@ class Dailydata:
                               datetime.timedelta(days=(int(data_date)))).strftime("%Y-%m-%d")
         comm = f"select sum({field}) from {self.table} where \'date\'>=\'{before_day}\'"
         # comm = f"select * from {self.table} where \'date\'>=\'{before_day}\'"
-        print(comm)
+        # print(comm)
         action_result = self.get_sql_result(comm=comm)
         return action_result[0]
 
