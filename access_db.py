@@ -84,9 +84,9 @@ class Userdata:
         return column_names
 
     def translate_to_dir(self, column_value, data):
-        dir_result = []
-        for i in range(len(data)):
-            dir_result.append({column_value[i]: data[i]})
+        dir_result = {}
+        for key, value in zip(column_value, data):
+            dir_result[key] = value
         return dir_result
 
 class Dailydata:
@@ -137,8 +137,8 @@ class Dailydata:
 
     def add_data(self, food_name: str = None, food_calories: float = 0,
                  exercise_name: str = None, exercise_duration: float = 0):
-        date = datetime.datetime.now().strftime("%Y:%m:%d")
-        time = datetime.datetime.now().strftime("%H:%M:%S")
+        date = datetime.datetime.now().strftime("%Y-%m-%d")
+        time = datetime.datetime.now().strftime("%H-%M-%S")
         comm = (f"insert into {self.table} values(\'{str(date)}\',\'{str(time)}\',"
                 f"\'{str(self.user_id)}\',\'{str(food_name)}\', {float(food_calories)},"
                 f" \'{str(exercise_name)}\',{float(exercise_duration)})")
@@ -153,6 +153,13 @@ class Dailydata:
             return None
         return self.trans_to_dir(action_result, columns_value, True)
 
+    def summary_calories_data(self, field: str = "food_calories", data="2024:09:04"):
+        if not (field == "food_calories" or field == "exercise_duration"):
+            return
+        comm = f"select sum({field}) from {self.table} where \'date\'>=\'{data}\'"
+        action_result = self.get_sql_result(comm=comm)
+        return action_result[0]
+
     def search_all_data(self, field: str, data):
         columns_value = action_result = comm = comm2 = None
         count_status = False
@@ -161,10 +168,10 @@ class Dailydata:
                 before_day = None
                 data = int(data[:-1])
                 if data == 0:
-                    before_day = datetime.datetime.now().strftime("%Y:%m:%d")
+                    before_day = datetime.datetime.now().strftime("%Y-%m-%d")
                 else:
                     before_day = (datetime.datetime.now() -
-                                  datetime.timedelta(days=(int(data)))).strftime("%Y:%m:%d")
+                                  datetime.timedelta(days=(int(data)))).strftime("%Y-%m-%d")
                 comm = f"select * from {self.table} where {field} >= \'{before_day}\'"
                 comm2 = f"select count(*) from {self.table} where {field} >= \'{before_day}\'"
             else:
@@ -204,8 +211,9 @@ class Dailydata:
     def trans_to_dir(self, action_data, column_value, count_status: bool = False):
         dir_result = []
         if count_status:
-            for i in range(len(action_data)):
-                dir_result.append({column_value[i]: action_data[i]})
+            dir_result = {}
+            for key, value in zip(column_value, action_data):
+                dir_result[key] = value
             return dir_result
         else:
             for i in range(len(action_data)):
@@ -221,7 +229,9 @@ if __name__ == "__main__":
     daily_data = Dailydata(user_id)
     # print(daily_data.search_all_data("date", "0d"))
     # print(daily_data.search_all_data("date", "10d"))
-    print(daily_data.search_all_data("date", "2024:09:04"))
+    # print(daily_data.search_all_data("date", "2024:09:04"))
+    print(daily_data.summary_calories_data("exercise_duration", "2024:09:04"))
+    print(daily_data.summary_calories_data("food_calories", "2024:09:04"))
     # print(daily_data.get_sql_result("select * from daily_info where date >= \"2024-09-04\""))
     # print(daily_data.search_data("u_id","gg"))
     # list = daily_data.search_data("u_id", "gg")
