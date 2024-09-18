@@ -138,7 +138,7 @@ class Dailydata:
     def add_data(self, food_name: str = None, food_calories: float = 0,
                  exercise_name: str = None, exercise_duration: float = 0):
         date = datetime.datetime.now().strftime("%Y-%m-%d")
-        time = datetime.datetime.now().strftime("%H-%M-%S")
+        time = datetime.datetime.now().strftime("%H:%M:%S")
         comm = (f"insert into {self.table} values(\'{str(date)}\',\'{str(time)}\',"
                 f"\'{str(self.user_id)}\',\'{str(food_name)}\', {float(food_calories)},"
                 f" \'{str(exercise_name)}\',{float(exercise_duration)})")
@@ -153,10 +153,20 @@ class Dailydata:
             return None
         return self.trans_to_dir(action_result, columns_value, True)
 
-    def summary_calories_data(self, field: str = "food_calories", data="2024:09:04"):
+    def summary_calories_data(self, field: str = "food_calories", data="1d"):
         if not (field == "food_calories" or field == "exercise_duration"):
             return
-        comm = f"select sum({field}) from {self.table} where \'date\'>=\'{data}\'"
+        if "d" in data:
+            before_day = None
+            data_date = int(data[:-1])
+            if data_date == 0:
+                before_day = datetime.datetime.now().strftime("%Y-%m-%d")
+            else:
+                before_day = (datetime.datetime.now() -
+                              datetime.timedelta(days=(int(data_date)))).strftime("%Y-%m-%d")
+        comm = f"select sum({field}) from {self.table} where \'date\'>=\'{before_day}\'"
+        # comm = f"select * from {self.table} where \'date\'>=\'{before_day}\'"
+        print(comm)
         action_result = self.get_sql_result(comm=comm)
         return action_result[0]
 
@@ -230,8 +240,8 @@ if __name__ == "__main__":
     # print(daily_data.search_all_data("date", "0d"))
     # print(daily_data.search_all_data("date", "10d"))
     # print(daily_data.search_all_data("date", "2024:09:04"))
-    print(daily_data.summary_calories_data("exercise_duration", "2024:09:04"))
-    print(daily_data.summary_calories_data("food_calories", "2024:09:04"))
+    print(daily_data.summary_calories_data("exercise_duration", "0d"))
+    print(daily_data.summary_calories_data("food_calories", "1d"))
     # print(daily_data.get_sql_result("select * from daily_info where date >= \"2024-09-04\""))
     # print(daily_data.search_data("u_id","gg"))
     # list = daily_data.search_data("u_id", "gg")
