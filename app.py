@@ -1,9 +1,9 @@
-from flask import Flask, request, abort, render_template, redirect, url_for, jsonify
+from flask import Flask, request, abort, render_template, redirect, url_for, jsonify , send_from_directory
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError, LineBotApiError
 from linebot.models import (
     MessageEvent, TextMessage, TextSendMessage, TemplateSendMessage,FlexSendMessage,
-    ButtonsTemplate, PostbackAction, CameraRollAction, CameraAction, ImageMessage,
+    ButtonsTemplate, PostbackAction, ImageMessage,
     QuickReply, QuickReplyButton, MessageAction, URIAction, PostbackEvent
 )
 import requests
@@ -11,7 +11,6 @@ from configparser import ConfigParser
 import logging
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.schema import HumanMessage
-from langchain_community.vectorstores import FAISS
 import io
 import base64
 from PIL import Image
@@ -21,11 +20,13 @@ import sqlite3
 from datetime import datetime
 from access_db import Userdata, Dailydata  # 資料庫操作
 from health_dashboard import HealthDashboard  # 健康數據監控
-from foodanalyze import FoodCalorieAnalyzer  # 食物熱量分析
-from PIL import ImageOps
+from food_analyzer import FoodCalorieAnalyzer  # 食物熱量分析
 import atexit
 from sport_caculate import CalorieAnalyzer
-
+from intent_recog import intent_recognization  # Intent Recognition
+from food_analyzer import FoodCalorieAnalyzer  # Food Analyzer
+from openai import AzureOpenAI
+import os
 
 class Lineca:
     def __init__(self):
@@ -39,6 +40,7 @@ class Lineca:
         self.line_bot_api = LineBotApi(self.channel_access_token)
         self.handler = WebhookHandler(self.channel_secret)
         
+     
 
         # 初始化 Google Generative AI
         self.llm_gemini = ChatGoogleGenerativeAI(
@@ -82,7 +84,9 @@ class Lineca:
             self.user_db.close_db()
         if self.daily_db:
             self.daily_db.close_db()
+
     def setup_routes(self):
+
         # 設定 /callback 路由
         @self.app.route("/callback", methods=['POST'])
         def callback():
@@ -96,16 +100,19 @@ class Lineca:
             except InvalidSignatureError:
                 logging.error("Invalid signature. Check your channel secret and access token.")
                 abort(400)
+                return 'OK'
 
-            return 'OK'
 
+        @self.app.route('/favicon.ico')
+        def favicon():
+            return send_from_directory(os.path.join(self.app.root_path, 'static'),
+                                    'favicon.ico', mimetype='image/vnd.microsoft.icon')
         # 設置運動數據儀表板的路由
         @self.app.route("/dashboard/<user_id>")
         def display_dashboard(user_id):
             # 傳入 user_id 動態生成健康儀表板
             return redirect(f"/dashboard/?user_id={user_id}")
 
-        # 網頁表單路由，處理表單提交及數據庫存儲
         @self.app.route("/form", methods=['GET', 'POST'])
         def form():
             if request.method == 'POST':
@@ -122,7 +129,7 @@ class Lineca:
                 weight = data.get('weight')
                 activity_level = data.get('activity_level', 1.2)  # 默認值
 
-                # 日誌確認 u_id 是否被正確接收
+                # 確認 u_id 是否被正確接收
                 logging.info(f"接收到的 u_id: {u_id}")
                 logging.info(f"接收到的資料 - 姓名: {name}, 年齡: {age}, 身高: {height}, 體重: {weight}, 性別: {gender}, 活動水平: {activity_level}")
 
@@ -141,8 +148,8 @@ class Lineca:
 
                 # 返回成功響應
                 return jsonify({'status': 'success', 'message': '資料已成功提交！'}), 200
-            else:
-                # 從查詢參數中獲取 u_id
+
+            else:  # GET 方法以呈現表單
                 u_id = request.args.get('u_id')
                 logging.info(f"訪問表單的 u_id: {u_id}")
 
@@ -152,32 +159,16 @@ class Lineca:
                 # 從資料庫中檢索用戶資料
                 user_data = Userdata(u_id)
                 user_record = user_data.search_data('u_id', u_id)
-
                 if user_record:
                     # 將使用者記錄轉換為字典
                     column_names = user_data.get_all_columns()
                     user_dict = dict(zip(column_names, user_record))
                 else:
-                    # 如果使用者不存在，建立新使用者
-                    logging.info("使用者不存在，正在建立新使用者...")
-                    try:
-                        user_data.add_data(
-                            name='新使用者',
-                            gender='male',  # 預設為 'male'，可根據需求調整
-                            age=30,
-                            weight=70.0,
-                            height=175.0,
-                            activity_level=1.2
-                        )
-                        # 重新獲取使用者資料
-                        user_record = user_data.search_data('u_id', u_id)
-                        user_dict = dict(zip(user_data.get_all_columns(), user_record))
-                    except Exception as e:
-                        logging.error(f"建立新使用者失敗: {e}")
-                        return "建立新使用者時發生錯誤。", 500
+                    # 如果使用者不存在，顯示空白表單讓用戶填寫資料
+                    logging.info("使用者不存在，顯示空白表單讓用戶填寫資料")
+                    user_dict = {}  # 顯示空白表單
 
-                return render_template('user_form.html', u_id=u_id, user_dict=user_dict)
-      
+                return render_template('user_form.html', u_id=u_id, user_dict=user_dict)      
 
         @self.handler.add(MessageEvent, message=TextMessage)
         def handle_message(event):
@@ -273,6 +264,8 @@ class Lineca:
                 return  # 完成處理後直接返回，避免進一步處理
             
 
+
+
             # 處理「記錄飲食」按鈕-意圖識別
             if user_message == '記錄飲食':
                 logging.info("Processing: 記錄飲食與運動")
@@ -282,25 +275,27 @@ class Lineca:
 
             if current_state == 'awaiting_food_or_exercise':
                 logging.info("Processing user input for food or exercise")
+                # 使用 IntentRecognition 處理使用者輸入
+                intent =intent_recognization (user_message) 
                 try:
-                    # 分析用户输入是饮食还是运动
-                    if '吃了' in user_message or '食物' in user_message:
-                        # 处理饮食输入
-                        food_analyzer = FoodCalorieAnalyzer(user_id)
-                        result_message = food_analyzer.handle_food_input(user_message)
+                    if intent == "記錄運動":
+                        # 處理運動輸入
+                        calorie_analyzer = CalorieAnalyzer(user_id)
+                        # 將提取的資訊傳遞給 CalorieAnalyzer
+                        result_message = calorie_analyzer.handle_user_input(user_message) #這裡返回的是一個字串
                         self.line_bot_api.reply_message(reply_token, TextSendMessage(text=result_message))
-
-                    elif '跑步' in user_message or '運動' in user_message:
-                          # 初始化运动卡路里计算器并处理运动输入
-                        exercise_calculator =CalorieAnalyzer(user_id)
-                        result_message = exercise_calculator.handle_user_input(user_message)
+                    elif intent == "記錄飲食":
+                        food_analyzer = FoodCalorieAnalyzer(user_id)
+                        result_message = food_analyzer.analyze_and_store_food_calories(user_message)
                         self.line_bot_api.reply_message(reply_token, TextSendMessage(text=result_message))
                     else:
-                        self.line_bot_api.reply_message(
-                            reply_token,
-                            TextSendMessage(text="抱歉，我無法識別。")
-                        )
+                        # 無法識別的意圖
+                        self.line_bot_api.reply_message(reply_token, TextSendMessage(text="抱歉，我無法識別您的輸入，請嘗試描述您的飲食或運動。"))
 
+                    # 重置使用者狀態
+                    self.user_states[user_id]['state'] = None
+                    return
+                
                 except Exception as e:
                     logging.error(f"處理輸入發生錯誤: {e}")
                     self.line_bot_api.reply_message(
@@ -308,7 +303,6 @@ class Lineca:
                         TextSendMessage(text="處理請求發生錯誤，稍後再試。")
                     )
                     return     
-                       
             logging.info("未觸發意圖識別或Gemini對話，無需回覆")
 
 
