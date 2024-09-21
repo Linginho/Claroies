@@ -27,8 +27,12 @@ class Userdata:
                                  'age INTEGER, '
                                  'weight FLOATING, '
                                  'height FLOATING, '
-                                 'activity_level FLOATING )')
+                                 'activity_level FLOATING, '
+                                 'bmr FLOATING)')
         self.close_db()
+        if 'bmr' not in self.get_all_columns():
+            comm = "ALTER TABLE users ADD COLUMN bmr FLOATING"
+            self.run_sql_comm(comm=comm)
 
     def run_sql_comm(self, comm: str):
         self.open_db()
@@ -42,9 +46,10 @@ class Userdata:
         return result
 
     def add_data(self, name: str = "test", gender: bool = True, age: float = 20,
-                 weight: float = 60, height: float = 160, activity_level: float = 1.2):
+                 weight: float = 60, height: float = 160, activity_level: float = 1.2,
+                 bmr: float = 1500):
         comm = (f"insert into {self.table} values(\'{str(self.user_id)}\', \'{str(name)}\', {bool(gender)},"
-                f"{int(age)}, {float(weight)}, {float(height)}, {float(activity_level)})")
+                f"{int(age)}, {float(weight)}, {float(height)}, {float(activity_level)}, {float(bmr)})")
         if not self.search_data("u_id", self.user_id):
             self.run_sql_comm(comm=comm)
         return self.search_data("u_id", self.user_id)
@@ -59,11 +64,12 @@ class Userdata:
 
     def update_data(self, field: str, data):
         if field == "name":
-            comm = f"update {self.table} set {field}={str(data)} where u_id=\'{str(self.user_id)}\'"
+            comm = f"update {self.table} set {field}=\'{str(data)}\' where u_id=\'{str(self.user_id)}\'"
         elif field == "gender":
             comm = f"update {self.table} set {field}={bool(data)} where u_id=\'{str(self.user_id)}\'"
         else:
             comm = f"update {self.table} set {field}={float(data)} where u_id=\'{str(self.user_id)}\'"
+        print(comm)
         if self.search_data("u_id", self.user_id):
             self.run_sql_comm(comm=comm)
         return self.search_data("u_id", self.user_id)
@@ -115,8 +121,7 @@ class Dailydata:
                                  'food_name TEXT, '
                                  'food_calories FLOATING, '
                                  'exercise_name TEXT, '
-                                 'exercise_duration FLOATING,'
-                                 'calories_burned FLOATING)')  # 添加消耗卡路里的字段)
+                                 'exercise_duration FLOATING)')
         self.close_db()
 
     def run_sql_comm(self, comm: str):
@@ -137,12 +142,12 @@ class Dailydata:
         return result
 
     def add_data(self, food_name: str = None, food_calories: float = 0,
-                 exercise_name: str = None, exercise_duration: float = 0, calories_burned: float = 0):
+                 exercise_name: str = None, exercise_duration: float = 0):
         date = datetime.datetime.now().strftime("%Y-%m-%d")
         time = datetime.datetime.now().strftime("%H:%M:%S")
         comm = (f"insert into {self.table} values(\'{str(date)}\',\'{str(time)}\',"
                 f"\'{str(self.user_id)}\',\'{str(food_name)}\', {float(food_calories)},"
-                f" \'{str(exercise_name)}\', {float(exercise_duration)}, {float(calories_burned)})")
+                f" \'{str(exercise_name)}\',{float(exercise_duration)})")
         self.run_sql_comm(comm=comm)
         return self.search_data("time", time)
 
@@ -166,8 +171,6 @@ class Dailydata:
                 before_day = (datetime.datetime.now() -
                               datetime.timedelta(days=(int(data_date)))).strftime("%Y-%m-%d")
         comm = f"select sum({field}) from {self.table} where \'date\'>=\'{before_day}\'"
-        # comm = f"select * from {self.table} where \'date\'>=\'{before_day}\'"
-        # print(comm)
         action_result = self.get_sql_result(comm=comm)
         return action_result[0]
 
@@ -238,11 +241,15 @@ class Dailydata:
 if __name__ == "__main__":
     user_id = "aa"
     daily_data = Dailydata(user_id)
+    user_data = Userdata(user_id)
+    user_data.update_data(field="bmr", data=1.5)
+    user_data.update_data(field="name", data="ggg")
+    print(user_data.search_data(field="u_id", data=user_id))
     # print(daily_data.search_all_data("date", "0d"))
-    # print(daily_data.search_all_data("date", "10d"))
+    #print(daily_data.search_all_data("date", "10d"))
     # print(daily_data.search_all_data("date", "2024:09:04"))
-    print(daily_data.summary_calories_data("exercise_duration", "0d"))
-    print(daily_data.summary_calories_data("food_calories", "1d"))
+    #print(daily_data.summary_calories_data("exercise_duration", "0d"))
+    #print(daily_data.summary_calories_data("food_calories", "1d"))
     # print(daily_data.get_sql_result("select * from daily_info where date >= \"2024-09-04\""))
     # print(daily_data.search_data("u_id","gg"))
     # list = daily_data.search_data("u_id", "gg")
