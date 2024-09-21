@@ -64,11 +64,12 @@ class Userdata:
 
     def update_data(self, field: str, data):
         if field == "name":
-            comm = f"update {self.table} set {field}={str(data)} where u_id=\'{str(self.user_id)}\'"
+            comm = f"update {self.table} set {field}=\'{str(data)}\' where u_id=\'{str(self.user_id)}\'"
         elif field == "gender":
             comm = f"update {self.table} set {field}={bool(data)} where u_id=\'{str(self.user_id)}\'"
         else:
             comm = f"update {self.table} set {field}={float(data)} where u_id=\'{str(self.user_id)}\'"
+        print(comm)
         if self.search_data("u_id", self.user_id):
             self.run_sql_comm(comm=comm)
         return self.search_data("u_id", self.user_id)
@@ -242,6 +243,7 @@ if __name__ == "__main__":
     daily_data = Dailydata(user_id)
     user_data = Userdata(user_id)
     user_data.update_data(field="bmr", data=1.5)
+    user_data.update_data(field="name", data="ggg")
     print(user_data.search_data(field="u_id", data=user_id))
     # print(daily_data.search_all_data("date", "0d"))
     #print(daily_data.search_all_data("date", "10d"))
