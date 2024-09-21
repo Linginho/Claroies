@@ -1,19 +1,24 @@
 import access_db
-from access_db import Userdata
-from access_db import Dailydata
 
-user_id = "abcdef"
-user_data = Userdata(user_id)
-daily_data = Dailydata(user_id)
-# user_data = access_db.Userdata(user_id)
-# daily_data = access_db.Dailydata(user_id)
-user_data.add_data(u_id=user_id)
+user_id = "aa"
+user = access_db.Userdata(user_id)
+print(user.add_data("kk", True, 20, 80, 180, 1.2))
+print(user.search_data("u_id", "gg"))
+print(user.update_data("age", 50))
+daily_data = access_db.Dailydata(user_id)
+daily_data.add_data(food_name="fff", food_calories=500)
+daily_data.add_data(exercise_name="run", exercise_duration=300)
+print(daily_data.search_data(field="u_id", data=user_id))
+print(daily_data.search_all_data(field="u_id", data=user_id))
+print(daily_data.search_data("u_id", "gg"))
+print(daily_data.search_all_data("date", "10d"))
+food_items = [
+    {"name": "水餃", "calories": 1000, "quantity": 1},
+    {"name": "蘋果", "calories": 52, "quantity": 1},
+    {"name": "炒飯", "calories": 500, "quantity": 1}
+]
+for i in range(len(food_items)):
+    daily_data.add_data(food_name=food_items[i]["name"], food_calories=food_items[i]["calories"])
 
-print(user_data.add_data("gg", "kk", "True", 20, 80, 180, 1.2))
-print(user_data.search_data("u_id", "gg"))
-print(user_data.update_data("gg", "age", 50))
-print(user_data.get_all_columns())
-# print(user.delete_data(u_id="gg"))
-
-daily_data.add_data("gg")
-daily_data.add_data("gg")
+print(daily_data.search_data("u_id", "gg"))
+print(daily_data.search_all_data("date", "10d"))
